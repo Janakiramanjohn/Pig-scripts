@@ -1,0 +1,101 @@
+
+Use case 1: 
+To get all the details from the transaction amount detail that is greater than with a specific amount which the user wants.
+Execution Script:
+a= load '/user/cloudera/Transactional.dat' using PigStorage(',');
+b = foreach a generate $2,$3;
+c = filter b by $1>160;
+dump c;
+store c into ‘/user/cloudera/task1’;
+ 
+Use case 2:
+Count all the transaction where amount is between 175 to 200.
+
+Execution Script:
+A = load '/user/cloudera/txns-large.dat' using PigStorage (',') as (tid, d, uid, amt : double , cat, prod,city,state,pt);
+B = foreach  A generate tid, amt;
+C = filter B by ($1>170 and $1<200);
+D = foreach C generate 1 as one;
+E = group D by one;
+F = foreach E generate COUNT(D.one);
+dump F;
+Use case 3:
+Calculate the total sum and total count of all the transaction for each user id.
+
+Execution Script:
+step1 = load '/user/cloudera/txns-large.dat' using PigStorage(',');
+step2 = foreach step1 generate $2 as uid,$3 as amt;
+step3 = group step2 by uid;
+step4 = foreach step3 generate group, SUM(step2.amt);
+dump step4;
+
+Use case 4:
+Calculate the average transaction value for each user id.
+Execution Script:
+step1 = load '/user/cloudera/txns-large.dat' using PigStorage(',');
+step2 = foreach step1 generate $2 as uid,$3 as amt;
+step3 = group step2 by uid;
+step4 = foreach step3 generate group, SUM(step2.amt),COUNT(step2.amt),AVG(step2.amt);
+dump step4;
+Use case 5:
+Calculate total sales amt for each Month.
+Execution Script:
+a = load '/user/cloudera/txns-large.dat' using PigStorage(',') as (tid,tdate:chararray,uid,amt:double,cat,acc,city,state,pay);
+b = foreach a generate SUBSTRING(tdate,0,2) as mon, amt;
+c = group b by mon;
+d = foreach c generate group, SUM(b.amt) as sum;
+dump d;
+Use case 6:
+Divide the file into 12 files, each file containing each month of data. For eg. file1 should contain data of january txn, file 2 should contain data of feb txn.
+Execution Script:
+a = load '/user/cloudera/txns-large.dat' using PigStorage(',') as (tid,tdate:chararray,uid,amt:double,cat,acc,city,state,pay);;
+b = foreach a generate SUBSTRING(tdate,0,2) as month,tid,tdate,uid,amt,cat,acc,city,state,pay;
+c = filter b by month=='01';
+dump c;
+d = filter b by month=='02';
+dump d;
+e = filter b by month=='03';
+dump e;
+f = filter b by month=='04';
+dump f;
+g = filter b by month=='05';
+dump g;
+h = filter b by month=='06';
+dump h;
+i = filter b by month=='07';
+dump i;
+j = filter b by month=='08';
+dump j;
+k = filter b by month=='09';
+dump k;
+l = filter b by month=='10';
+dump l;
+m = filter b by month=='11';
+dump m;
+n = filter b by month=='12'; dump n;
+
+Use case 7:
+Find the name of top 3 spenders.
+Execution Script:
+a = load '/user/cloudera/txns-large.dat' using PigStorage(',') as (tid,tdate,uid:int,amt:double,cat,acc,city,state,pay);
+b = load '/user/cloudera/custs-large.dat' using PigStorage(',') as
+(uid:int,fname:chararray,lname,age,prof);
+c = join a by uid,b by uid;
+d = foreach c generate $2 as uid, $3 as amt,$10 as fname;
+e = group d by (uid,fname);
+f = foreach e generate group, SUM(d.amt) as Total;
+g = order f by Total DESC;
+h = limit g 3;
+dump h;
+Use case 8:
+Find the profession of user who has spend the maximum amount.
+Execution Script:
+a = load '/user/cloudera/txns-large.dat' using PigStorage(',') as (tid,tdate,uid:int,amt:double,cat,acc,city,state,pay);
+b = load '/user/cloudera/custs-large.dat' using PigStorage(',') as
+(uid:int,fname:chararray,lname,age,prof:chararray);
+c = join a by uid,b by uid;
+d = foreach c generate $2 as ID,$3 as tamt,$13 as Prof;
+f = group d by ($0,$2);
+h = foreach f generate group,SUM(d.tamt) as Res;
+i = order h by Res DESC;
+j = limit i 1;  dump j;
